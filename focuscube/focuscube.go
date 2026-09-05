@@ -89,7 +89,7 @@ func (f *FocusCube) command(cmd string) (string, error) {
 	return "", fmt.Errorf("focuscube: timeout waiting for reply to %q", cmd)
 }
 
-// Command issues a raw command and returns the raw reply, for debugging.
+// Command focuscube reads device status and provides diagnostic controls.
 func (f *FocusCube) Command(cmd string) (string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()

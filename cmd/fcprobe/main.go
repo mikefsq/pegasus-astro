@@ -1,24 +1,4 @@
-// Command fcprobe exercises the pure-Go Pegasus FocusCube driver against a real
-// device over its FTDI serial link: open a focuser, dump the read surface, move it,
-// drive every config setter, or run a non-destructive motion self-test.
-//
-//	fcprobe                     # read-only: id, position, moving, temperature
-//	fcprobe -list               # list candidate serial ports (with USB serial)
-//	fcprobe -port COM3          # use a specific port
-//	fcprobe -serial FT1ABCDE    # open the unit with this USB serial (survives replug)
-//	fcprobe -dc                 # DC-motor move semantics (G:) instead of stepper (M:)
-//	fcprobe -moveto 12000       # absolute move, watch settle
-//	fcprobe -in 200 / -out 200  # relative move by N steps
-//	fcprobe -stoptest 40000     # move far, run ~1s, halt mid-flight
-//	fcprobe -halt               # stop motion
-//	fcprobe -sync 0             # set reported position without moving (W:)
-//	fcprobe -reverse on|off     # direction reversal (N:)
-//	fcprobe -led on|off         # status LED (L:)
-//	fcprobe -knob enable|disable# manual knob / encoder (E:)
-//	fcprobe -backlash 50        # backlash steps, 0 = off (C:)
-//	fcprobe -raw "P"            # send a raw command, print the reply
-//	fcprobe -selftest           # non-destructive motion test (returns to start)
-//	fcprobe -watch              # poll position+moving repeatedly
+// Command fcprobe reads device status and provides diagnostic controls.
 package main
 
 import (

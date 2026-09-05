@@ -1,15 +1,4 @@
-// Package focuscube is a pure-Go driver for Pegasus Astro focusers
-// (FocusCube / FocusCube2 / SMFC / DMFC / ScopsOAG) over their FTDI USB-serial
-// link. Unlike the ZWO/Astroasis accessories (USB-HID), these are an FTDI VCP
-// bridge presented as an OS serial port; the protocol is plain ASCII commands
-// (each terminated with "\n"; replies are "\n"-terminated).
-//
-// The command set is the Pegasus DMFC / FocusCube serial protocol (published by
-// Pegasus as the DMFC Serial Command Table). The transport opens the FTDI virtual
-// COM port at 19200 8N1 and does line I/O via go.bug.st/serial — no vendor library, no
-// raw-USB FTDI reimplementation. It uses only the library's pure-Go paths (port I/O
-// everywhere; the USB-VID enumerator off macOS, device-name matching on macOS), so
-// it builds for any target with CGO_ENABLED=0.
+// Package focuscube controls Pegasus FocusCube and DMFC focusers over USB-serial.
 package focuscube
 
 // FTDI vendor ID (the FocusCube bridge) and the FocusCube serial line speed.
@@ -28,10 +17,8 @@ type Transport interface {
 	Close() error
 }
 
-// DeviceInfo identifies an opened serial port plus the USB-descriptor properties the
-// enumerator reports for it before the port is opened. Serial is the FTDI bridge's USB
-// iSerialNumber — a stable per-unit identity that disambiguates several FTDI devices
-// sharing VID 0x0403 and survives replug / port renumbering.
+// DeviceInfo contains serial-port discovery metadata.
+// Serial identifies the USB bridge, not a protocol-level device serial.
 type DeviceInfo struct {
 	Port    string // e.g. /dev/cu.usbserial-XXXX, /dev/ttyUSB0, COM3
 	Serial  string // USB iSerialNumber (from the enumerator); "" if unavailable
