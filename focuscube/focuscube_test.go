@@ -158,3 +158,32 @@ func TestDeviceInfoCarriesSerial(t *testing.T) {
 		t.Errorf("Info() = %+v, want Serial=FT1ABCDE Product=FocusCube", got)
 	}
 }
+
+// The identification test openFirst relies on: a FocusCube answers "#" with an OK id, anything
+// else on the bus does not.
+//
+// VID 0403 is a generic FTDI bridge shared by mounts, meters and focusers, so binding on the VID
+// alone takes whichever device enumerated first — holding its port against the driver that owns
+// it and speaking a protocol it does not understand. This is the check that prevents that; if it
+// ever passed for a silent device, openFirst would go back to grabbing neighbours.
+func TestConnectedIdentifiesTheDevice(t *testing.T) {
+	cases := []struct {
+		name    string
+		replies map[string]string
+		want    bool
+	}{
+		{"a FocusCube answers with an OK id", map[string]string{"#": "OK_FC"}, true},
+		{"a different Pegasus unit still identifies", map[string]string{"#": "OK_FC2"}, true},
+		{"a silent device is not one", map[string]string{}, false},
+		{"a device that replies without OK is not one", map[string]string{"#": "GARBAGE"}, false},
+		{"another instrument's chatter is not one", map[string]string{"#": "19.85,1013.2"}, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			f := New(newFake(c.replies), DeviceInfo{Port: "/dev/ttyUSB0"})
+			if got := f.Connected(); got != c.want {
+				t.Errorf("Connected() = %v, want %v", got, c.want)
+			}
+		})
+	}
+}

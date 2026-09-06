@@ -40,6 +40,14 @@ func openPort(dev string) (Transport, DeviceInfo, error) {
 // (IOKit) path so the driver builds for any target with CGO_ENABLED=0.
 func Enumerate() ([]DeviceInfo, error) { return enumeratePorts() }
 
+// openFirst opens the first attached port that IDENTIFIES as a FocusCube, not merely the first
+// port with FTDI's vendor id.
+//
+// VID 0403 is a generic USB-serial bridge shared by mounts, focusers, sky-quality meters and
+// anything else that needed a UART, so a rig commonly carries several. Taking ports[0] on the
+// strength of the VID alone binds whichever the OS enumerated first, holds its port against the
+// driver that actually owns it, and talks a protocol it does not speak. OpenBySerial exists for
+// the same reason and says so; this path simply did not honour it.
 func openFirst() (Transport, DeviceInfo, error) {
 	ports, err := enumeratePorts()
 	if err != nil {
@@ -48,7 +56,19 @@ func openFirst() (Transport, DeviceInfo, error) {
 	if len(ports) == 0 {
 		return nil, DeviceInfo{}, errors.New("focuscube: no FTDI serial port found")
 	}
-	return openInfo(ports[0])
+	for _, d := range ports {
+		t, info, err := openInfo(d)
+		if err != nil {
+			continue // busy (its real driver holds it) or not openable: no evidence about what it is
+		}
+		// The "#" handshake must answer with an OK id — a device that is not a FocusCube stays
+		// silent, so a parsed reply is identification rather than "something was listening".
+		if New(t, info).Connected() {
+			return t, info, nil
+		}
+		t.Close()
+	}
+	return nil, DeviceInfo{}, fmt.Errorf("focuscube: none of %d candidate port(s) answered the handshake", len(ports))
 }
 
 // openInfo opens the port named by an enumerated DeviceInfo and returns that same info

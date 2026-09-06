@@ -89,7 +89,8 @@ func (f *FocusCube) command(cmd string) (string, error) {
 	return "", fmt.Errorf("focuscube: timeout waiting for reply to %q", cmd)
 }
 
-// Command focuscube reads device status and provides diagnostic controls.
+// Command sends a raw command and returns the trimmed reply. The escape hatch for
+// commands with no typed method.
 func (f *FocusCube) Command(cmd string) (string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
